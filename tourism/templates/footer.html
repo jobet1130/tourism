@@ -1,0 +1,117 @@
+{% load static %}
+<footer class="site-footer bg-dark text-white">
+  <div class="container py-4">
+    <div class="row">
+      <!-- About Section -->
+      <div class="col-md-6 col-lg-4 mb-3">
+        <h3 class="h5 mb-1">Discover Misamis Occidental</h3>
+        <p class="text-muted">
+          Experience the beauty, culture, and adventure that Misamis Occidental has to offer.
+        </p>
+        <div class="social-links mt-3">
+          <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" class="social-link" data-social="facebook" aria-label="Facebook">
+            <i class="fab fa-facebook-f" aria-hidden="true"></i>
+          </a>
+          <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="social-link" data-social="instagram" aria-label="Instagram">
+            <i class="fab fa-instagram" aria-hidden="true"></i>
+          </a>
+          <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" class="social-link" data-social="twitter" aria-label="Twitter">
+            <i class="fab fa-twitter" aria-hidden="true"></i>
+          </a>
+          <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" class="social-link" data-social="youtube" aria-label="YouTube">
+            <i class="fab fa-youtube" aria-hidden="true"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- Quick Links -->
+      <div class="col-md-6 col-lg-2 mb-3">
+        <h3 class="h5 mb-1">Quick Links</h3>
+        <ul class="list-unstyled footer-links">
+          <li><a href="/" data-page="home" class="ajax-link">Home</a></li>
+          <li><a href="/destinations/" data-page="destinations" class="ajax-link">Destinations</a></li>
+          <li><a href="/festivals/" data-page="festivals" class="ajax-link">Festivals</a></li>
+          <li><a href="/stay/" data-page="stay" class="ajax-link">Where to Stay</a></li>
+          <li><a href="/cuisine/" data-page="cuisine" class="ajax-link">Cuisine</a></li>
+          <li><a href="/about/" data-page="about" class="ajax-link">About</a></li>
+          <li><a href="/contact/" data-page="contact" class="ajax-link">Contact</a></li>
+        </ul>
+      </div>
+
+      <!-- Contact Info -->
+      <div class="col-md-6 col-lg-3 mb-3">
+        <h3 class="h5 mb-1">Contact Us</h3>
+        <ul class="list-unstyled contact-info">
+          <li class="mb-2">
+            <i class="fas fa-map-marker-alt text-warning me-2" aria-hidden="true"></i>
+            <span>Provincial Capitol, Oroquieta City, Misamis Occidental</span>
+          </li>
+          <li class="mb-2">
+            <i class="fas fa-phone text-warning me-2" aria-hidden="true"></i>
+            <span>+63 88 531 2411</span>
+          </li>
+          <li class="mb-2">
+            <i class="fas fa-envelope text-warning me-2" aria-hidden="true"></i>
+            <span>tourism@misocc.gov.ph</span>
+          </li>
+        </ul>
+        
+        <!-- Newsletter Signup -->
+        <div class="newsletter-signup mt-3">
+          <h3 class="h6 mb-2">Stay Updated</h3>
+          <form id="newsletter-form" class="d-flex">
+            <label for="newsletter-email" class="visually-hidden">Email address for newsletter</label>
+            <input type="email" id="newsletter-email" class="form-control form-control-sm me-2" placeholder="Your email" required>
+            <button type="submit" class="btn btn-warning btn-sm">Subscribe</button>
+          </form>
+          <div id="newsletter-response" class="mt-2 small" aria-live="polite"></div>
+        </div>
+      </div>
+
+      <!-- Office Hours -->
+      <div class="col-md-6 col-lg-3">
+        <h3 class="h5 mb-1">Office Hours</h3>
+        <p class="text-muted">Monday - Friday</p>
+        <p class="text-muted">8:00 AM - 5:00 PM</p>
+        <div class="mt-3 pt-3 border-top border-secondary">
+          <p class="mb-1"><small>Emergency Hotline</small></p>
+          <p class="h5 text-warning mb-0">911</p>
+        </div>
+        
+        <!-- Language Selector -->
+        <div class="language-selector mt-3">
+          <h3 class="h6 mb-2">Language</h3>
+          <label for="language-selector" class="visually-hidden">Select language</label>
+          <select id="language-selector" class="form-select form-select-sm">
+            <option value="en">English</option>
+            <option value="tl">Tagalog</option>
+            <option value="ceb">Cebuano</option>
+            <option value="hil">Hiligaynon</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Bar -->
+    <div class="row mt-3 pt-3 border-top border-secondary">
+      <div class="col-md-6 text-center text-md-start">
+        <p class="mb-0 text-muted">&copy; <span id="current-year"></span> Misamis Occidental Provincial Tourism Office. All rights reserved.</p>
+      </div>
+      <div class="col-md-6 text-center text-md-end">
+        <p class="mb-0 text-muted">
+          <small>Built with <i class="fas fa-heart text-danger" aria-label="love"></i> for the people of Misamis Occidental</small>
+        </p>
+      </div>
+    </div>
+  </div>
+  
+  <!-- AJAX Loading Indicator -->
+  <div class="footer-loading-overlay">
+    <div class="footer-spinner" aria-label="Loading..."></div>
+  </div>
+</footer>
+
+<script>
+  // Set current year dynamically
+  document.getElementById('current-year').textContent = new Date().getFullYear();
+</script>

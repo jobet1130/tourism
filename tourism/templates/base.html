@@ -32,6 +32,7 @@
         {# Global stylesheets #}
         <link rel="stylesheet" type="text/css" href="{% static 'css/tourism.css' %}">
         <link rel="stylesheet" type="text/css" href="{% static 'css/navbar.css' %}">
+        <link rel="stylesheet" type="text/css" href="{% static 'css/footer.css' %}">
 
         {# Font Awesome #}
         <link rel="stylesheet" type="text/css" href="{% static 'css/fontawesome.min.css' %}">
@@ -48,6 +49,8 @@
 
         {% block content %}{% endblock %}
 
+        {% include 'footer.html' %}
+
         {# jQuery #}
         <script type="text/javascript" src="{% static 'js/jquery.min.js' %}"></script>
 
@@ -57,6 +60,7 @@
         {# Global javascript #}
         <script type="text/javascript" src="{% static 'js/tourism.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/navbar.js' %}"></script>
+        <script type="text/javascript" src="{% static 'js/footer.js' %}"></script>
 
         {% block extra_js %}
         {# Override this in templates to add extra javascript #}
