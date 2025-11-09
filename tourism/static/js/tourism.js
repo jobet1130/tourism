@@ -1,331 +1,513 @@
 /*
-  global.js — Object-oriented ES module for global site-wide behaviors
-  - Sticky navbar with active menu highlighting
-  - Smooth in-page scrolling (respects prefers-reduced-motion)
-  - Back-to-top button with smooth scroll
-  - Reusable utility helpers
-  - Encapsulated in a class with init/destroy lifecycle
-  - Initialized after DOMContentLoaded; optimized for mobile/performance
+  Tourism.js - Advanced JavaScript Module
+  ======================================
+  Professional implementation with AJAX, jQuery, and JSON responses
 */
 
-export class GlobalSite {
-  /**
-   * Construct controller with optional overrides:
-   * new GlobalSite({ selectors: {...}, classes: {...}, thresholds: {...} })
-   */
-  constructor(options = {}) {
-    this._defaults = {
-      selectors: {
-        navbar: '.site-nav',
-        navLinks: '.site-nav a[href^="#"]',
-        section: 'section[id]',
-        backToTop: '.back-to-top',
-      },
-      classes: {
-        sticky: 'is-sticky',
-        active: 'is-active',
-        backToTopVisible: 'is-visible',
-      },
-      thresholds: {
-        backToTopPx: 400,
-        stickyOffsetPx: 10,
-      },
-    };
-
-    // Merge options
-    this.opts = {
-      ...this._defaults,
-      ...options,
-      selectors: { ...this._defaults.selectors, ...options.selectors },
-      classes: { ...this._defaults.classes, ...options.classes },
-      thresholds: { ...this._defaults.thresholds, ...options.thresholds },
-    };
-
-    // Internal state
-    this._navbar = null;
-    this._navLinks = [];
-    this._sections = [];
-    this._backToTop = null;
-    this._observer = null;
-    this._rafScheduled = false;
-    this._lastScrollY = 0;
-    this._stickyThreshold = this.opts.thresholds.stickyOffsetPx;
-    this._unbindFns = [];
-    this._destroyed = false;
-
-    // Bound handlers
-    this._onScroll = this._onScroll.bind(this);
-    this._onResize = this._onResize.bind(this);
-    this._handleAnchorClick = this._handleAnchorClick.bind(this);
-    this._onBackToTopClick = this._onBackToTopClick.bind(this);
-
-    // Auto-init on DOMContentLoaded for convenience
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', () => this.init(), { once: true });
-    } else {
+(function (global, factory) {
+  'use strict';
+  
+  if (typeof define === 'function' && define.amd) {
+    // AMD
+    define(['jquery'], factory);
+  } else if (typeof module === 'object' && module.exports) {
+    // CommonJS
+    module.exports = factory(require('jquery'));
+  } else {
+    // Browser globals
+    global.Tourism = factory(global.jQuery);
+  }
+}(typeof window !== 'undefined' ? window : this, function ($) {
+  'use strict';
+  
+  // Check if jQuery is available
+  if (!$) {
+    console.warn('jQuery is required for Tourism.js to function properly');
+    return null;
+  }
+  
+  // Tourism.js Main Class
+  class Tourism {
+    constructor(options = {}) {
+      // Default configuration
+      this.config = {
+        selectors: {
+          mainContent: '#main-content',
+          navLinks: '[data-page]',
+          navbar: '.site-navbar',
+          backToTop: '.back-to-top',
+          loadingOverlay: '.ajax-loading-overlay'
+        },
+        classes: {
+          active: 'active',
+          loading: 'loading',
+          hidden: 'hidden',
+          visible: 'visible'
+        },
+        animations: {
+          fadeDuration: 300,
+          slideDuration: 400,
+          delay: 50
+        },
+        ajax: {
+          timeout: 10000,
+          retries: 2
+        },
+        ...options
+      };
+      
+      // State management
+      this.state = {
+        currentPage: null,
+        isLoading: false,
+        isScrolling: false
+      };
+      
+      // DOM Elements
+      this.elements = {};
+      
+      // Initialize the application
       this.init();
     }
-  }
-
-  /* =========================
-     Static utility helpers
-     ========================= */
-  static q(sel, ctx = document) {
-    return ctx.querySelector(sel);
-  }
-
-  static qa(sel, ctx = document) {
-    return Array.from(ctx.querySelectorAll(sel));
-  }
-
-  static addClass(el, cls) { if (el) el.classList.add(cls); }
-  static removeClass(el, cls) { if (el) el.classList.remove(cls); }
-  static toggleClass(el, cls, force) {
-    if (!el) return;
-    if (typeof force === 'boolean') el.classList.toggle(cls, force);
-    else el.classList.toggle(cls);
-  }
-
-  // Delegation helper returns an unbind function
-  static delegate(root, selector, event, handler, opts = {}) {
-    const fn = (e) => {
-      const target = e.target.closest ? e.target.closest(selector) : null;
-      if (!target || !root.contains(target)) return;
-      handler.call(target, e, target);
-    };
-    root.addEventListener(event, fn, opts);
-    return () => root.removeEventListener(event, fn, opts);
-  }
-
-  static prefersReducedMotion() {
-    return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  }
-
-  /* =========================
-     Initialization & teardown
-     ========================= */
-  init() {
-    if (this._destroyed) return this;
-
-    // Query and cache DOM elements
-    this._navbar = GlobalSite.q(this.opts.selectors.navbar);
-    this._navLinks = GlobalSite.qa(this.opts.selectors.navLinks);
-    this._sections = GlobalSite.qa(this.opts.selectors.section);
-    this._backToTop = GlobalSite.q(this.opts.selectors.backToTop);
-
-    // Compute thresholds
-    this._computeStickyThreshold();
-
-    // Setup observer (preferred method for active-link)
-    this._setupSectionObserver();
-
+    
+    // Initialize the application
+    init() {
+      // Cache DOM elements
+      this.cacheElements();
+      
+      // Bind event listeners
+      this.bindEvents();
+      
+      // Initialize components
+      this.initComponents();
+      
+      // Set initial state
+      this.state.currentPage = this.getCurrentPage();
+      
+      // Initialize history state
+      this.initHistory();
+    }
+    
+    // Cache DOM elements for performance
+    cacheElements() {
+      const selectors = this.config.selectors;
+      this.elements = {
+        $mainContent: $(selectors.mainContent),
+        $navLinks: $(selectors.navLinks),
+        $navbar: $(selectors.navbar),
+        $backToTop: $(selectors.backToTop),
+        $loadingOverlay: $(selectors.loadingOverlay)
+      };
+    }
+    
     // Bind event listeners
-    this._bind();
-
-    // Apply initial state (defer to idle if available)
-    const applyInitial = () => {
-      this._onScroll(); // sets sticky/back-to-top/active states
-      if (!this._observer) this._updateActiveByPosition();
-    };
-    if ('requestIdleCallback' in window) requestIdleCallback(applyInitial, { timeout: 500 });
-    else setTimeout(applyInitial, 80);
-
-    return this;
-  }
-
-  destroy() {
-    if (this._destroyed) return this;
-    // Unbind all registered cleanup functions
-    while (this._unbindFns.length) {
-      const fn = this._unbindFns.pop();
-      try { fn(); } catch { /* ignore */ }
+    bindEvents() {
+      // Navigation events
+      this.elements.$navLinks.on('click.tourism', (e) => this.handleNavigation(e));
+      
+      // Window events
+      $(window).on('popstate.tourism', (e) => this.handlePopState(e));
+      $(window).on('scroll.tourism', () => this.handleScroll());
+      $(window).on('resize.tourism', () => this.handleResize());
+      
+      // Document events
+      $(document).on('keydown.tourism', (e) => this.handleKeyDown(e));
     }
-
-    // Disconnect observer if present
-    if (this._observer) {
-      try { this._observer.disconnect(); } catch { /* ignore */ }
-      this._observer = null;
+    
+    // Initialize components
+    initComponents() {
+      // Initialize navbar behavior
+      this.initNavbar();
+      
+      // Initialize back to top button
+      this.initBackToTop();
     }
-
-    // Remove classes and aria attributes added by script
-    if (this._navbar) GlobalSite.removeClass(this._navbar, this.opts.classes.sticky);
-    this._navLinks.forEach((a) => {
-      GlobalSite.removeClass(a, this.opts.classes.active);
-      a.removeAttribute('aria-current');
-    });
-    if (this._backToTop) GlobalSite.removeClass(this._backToTop, this.opts.classes.backToTopVisible);
-
-    this._destroyed = true;
-    return this;
-  }
-
-  /* =========================
-     Sticky threshold computation
-     ========================= */
-  _computeStickyThreshold() {
-    if (!this._navbar) {
-      this._stickyThreshold = this.opts.thresholds.stickyOffsetPx;
-      return;
+    
+    // Initialize history state
+    initHistory() {
+      try {
+        const state = {
+          page: this.state.currentPage,
+          content: this.elements.$mainContent.html(),
+          title: document.title,
+          timestamp: Date.now()
+        };
+        
+        window.history.replaceState(state, document.title, window.location.href);
+      } catch (error) {
+        console.warn('Failed to initialize history state:', error);
+      }
     }
-    const rect = this._navbar.getBoundingClientRect();
-    // Use navbar's top relative to document as threshold, with a lower bound
-    this._stickyThreshold = Math.max(this.opts.thresholds.stickyOffsetPx, rect.top + window.scrollY);
-  }
-
-  /* =========================
-     IntersectionObserver for active link highlighting
-     ========================= */
-  _setupSectionObserver() {
-    if (typeof IntersectionObserver === 'undefined' || !this._sections.length) {
-      this._observer = null;
-      return;
+    
+    // Get current page identifier
+    getCurrentPage() {
+      const $activeLink = this.elements.$navLinks.filter('.active');
+      return $activeLink.length ? $activeLink.data('page') : 'home';
     }
-
-    this._observer = new IntersectionObserver(
-      (entries) => {
-        // Select most visible intersecting section
-        let best = null;
-        for (const e of entries) {
-          if (!e.isIntersecting) continue;
-          if (!best || e.intersectionRatio > best.intersectionRatio) best = e;
+    
+    // Handle navigation click
+    handleNavigation(e) {
+      e.preventDefault();
+      
+      const $link = $(e.currentTarget);
+      const url = $link.attr('href');
+      const page = $link.data('page');
+      
+      // Validate navigation
+      if (!url || !page || this.state.isLoading) {
+        return;
+      }
+      
+      // Navigate to page
+      this.navigateToPage(url, page, true);
+    }
+    
+    // Navigate to a specific page
+    async navigateToPage(url, page, pushState = true) {
+      // Prevent concurrent requests
+      if (this.state.isLoading) {
+        return;
+      }
+      
+      // Set loading state
+      this.setLoadingState(true);
+      
+      try {
+        // Fetch page content via AJAX
+        const data = await this.fetchPageContent(url);
+        
+        // Update UI with new content
+        await this.updatePageContent(data, pushState);
+        
+        // Update navigation state
+        this.updateNavigation(page);
+        
+        // Trigger custom event
+        $(document).trigger('tourism:pageLoaded', { page, url, data });
+      } catch (error) {
+        console.error('Navigation failed:', error);
+        this.handleNavigationError(url, error);
+      } finally {
+        // Reset loading state
+        this.setLoadingState(false);
+      }
+    }
+    
+    // Fetch page content via AJAX
+    async fetchPageContent(url) {
+      // Construct JSON endpoint URL
+      const jsonUrl = this.getJsonEndpoint(url);
+      
+      // Retry mechanism
+      for (let attempt = 0; attempt <= this.config.ajax.retries; attempt++) {
+        try {
+          const response = await $.ajax({
+            url: jsonUrl,
+            method: 'GET',
+            dataType: 'json',
+            timeout: this.config.ajax.timeout
+          });
+          
+          // Validate response
+          if (response && response.status === 'success') {
+            return response;
+          } else {
+            throw new Error(response?.message || 'Invalid response format');
+          }
+        } catch (error) {
+          if (attempt === this.config.ajax.retries) {
+            throw error;
+          }
+          
+          console.warn(`Attempt ${attempt + 1} failed, retrying...`);
+          await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
         }
-        if (best && best.target && best.target.id) this._markActive(best.target.id);
-      },
-      {
-        root: null,
-        rootMargin: '0px 0px -45% 0px', // trigger when section reaches ~55% viewport
-        threshold: [0, 0.25, 0.5, 0.75, 1],
-      }
-    );
-
-    this._sections.forEach((s) => this._observer.observe(s));
-  }
-
-  _markActive(sectionId) {
-    this._navLinks.forEach((a) => {
-      const href = a.getAttribute('href') || '';
-      const id = href.startsWith('#') ? href.slice(1) : null;
-      const isActive = id === sectionId;
-      GlobalSite.toggleClass(a, this.opts.classes.active, isActive);
-      if (isActive) a.setAttribute('aria-current', 'true');
-      else a.removeAttribute('aria-current');
-    });
-  }
-
-  // Fallback active-link calculation based on viewport midpoint
-  _updateActiveByPosition() {
-    if (!this._sections.length) return;
-    const viewportMid = window.innerHeight / 2;
-    let chosen = null;
-    for (const sec of this._sections) {
-      const r = sec.getBoundingClientRect();
-      if (r.top <= viewportMid && r.bottom > 0) {
-        chosen = sec.id;
-        break;
       }
     }
-    if (!chosen && window.scrollY < 100 && this._sections[0]) chosen = this._sections[0].id;
-    if (chosen) this._markActive(chosen);
-  }
-
-  /* =========================
-     Smooth scrolling handler (delegated)
-     ========================= */
-  _handleAnchorClick(e, target) {
-    const href = target.getAttribute('href') || '';
-    if (!href || href === '#') return;
-    const id = href.slice(1);
-    const el = document.getElementById(id);
-    if (!el) return;
-    e.preventDefault();
-
-    const behavior = GlobalSite.prefersReducedMotion() ? 'auto' : 'smooth';
-    el.scrollIntoView({ behavior, block: 'start' });
-
-    // Accessibility: focus without additional scrolling
-    el.setAttribute('tabindex', '-1');
-    el.focus({ preventScroll: true });
-    setTimeout(() => el.removeAttribute('tabindex'), 1000);
-
-    // Replace hash without adding a history entry
-    if (history && history.replaceState) {
-      try { history.replaceState(null, '', `#${id}`); } catch { /* ignore */ }
+    
+    // Get JSON endpoint URL
+    getJsonEndpoint(url) {
+      if (url.endsWith('/')) {
+        return `${url}json/`;
+      } else if (url.endsWith('/json/')) {
+        return url;
+      } else {
+        return `${url}/json/`;
+      }
+    }
+    
+    // Update page content
+    async updatePageContent(data, pushState) {
+      const $mainContent = this.elements.$mainContent;
+      
+      // Fade out current content
+      await new Promise(resolve => $mainContent.fadeOut(this.config.animations.fadeDuration, resolve));
+      
+      // Update content
+      $mainContent.html(data.content);
+      
+      // Update title
+      if (data.title) {
+        document.title = data.title;
+      }
+      
+      // Fade in new content
+      await new Promise(resolve => $mainContent.fadeIn(this.config.animations.fadeDuration, resolve));
+      
+      // Add page transition effect
+      this.addPageTransition($mainContent);
+      
+      // Update browser history
+      if (pushState) {
+        const state = {
+          page: this.state.currentPage,
+          content: data.content,
+          title: data.title || document.title,
+          timestamp: Date.now()
+        };
+        
+        try {
+          window.history.pushState(state, data.title || document.title, window.location.href);
+        } catch (error) {
+          console.warn('Failed to update history state:', error);
+        }
+      }
+    }
+    
+    // Update navigation state
+    updateNavigation(page) {
+      // Remove active class from all links
+      this.elements.$navLinks.removeClass(this.config.classes.active);
+      this.elements.$navLinks.attr('aria-current', 'false');
+      
+      // Add active class to current page link
+      const $activeLink = this.elements.$navLinks.filter(`[data-page="${page}"]`);
+      $activeLink.addClass(this.config.classes.active);
+      $activeLink.attr('aria-current', 'page');
+      
+      // Update current page state
+      this.state.currentPage = page;
+    }
+    
+    // Handle popstate event (browser back/forward)
+    async handlePopState(e) {
+      const state = e.originalEvent.state;
+      
+      if (!state) {
+        // No state, reload the page
+        window.location.reload();
+        return;
+      }
+      
+      try {
+        // Set loading state
+        this.setLoadingState(true);
+        
+        // Update content from state
+        const $mainContent = this.elements.$mainContent;
+        
+        // Fade out current content
+        await new Promise(resolve => $mainContent.fadeOut(this.config.animations.fadeDuration, resolve));
+        
+        // Update content
+        $mainContent.html(state.content);
+        
+        // Update title
+        if (state.title) {
+          document.title = state.title;
+        }
+        
+        // Fade in new content
+        await new Promise(resolve => $mainContent.fadeIn(this.config.animations.fadeDuration, resolve));
+        
+        // Add page transition effect
+        this.addPageTransition($mainContent);
+        
+        // Update navigation
+        this.updateNavigation(state.page);
+        
+        // Update state
+        this.state.currentPage = state.page;
+      } catch (error) {
+        console.error('Failed to restore page state:', error);
+        window.location.reload();
+      } finally {
+        this.setLoadingState(false);
+      }
+    }
+    
+    // Handle navigation error
+    handleNavigationError(url, error) {
+      // Log error
+      console.error('Navigation error:', error);
+      
+      // Fallback to traditional navigation
+      window.location.href = url;
+    }
+    
+    // Set loading state
+    setLoadingState(isLoading) {
+      this.state.isLoading = isLoading;
+      
+      if (isLoading) {
+        // Show loading overlay
+        this.elements.$loadingOverlay.addClass(this.config.classes.active);
+        
+        // Add loading class to body
+        $('body').addClass(this.config.classes.loading);
+      } else {
+        // Hide loading overlay
+        this.elements.$loadingOverlay.removeClass(this.config.classes.active);
+        
+        // Remove loading class from body
+        $('body').removeClass(this.config.classes.loading);
+        
+        // Close mobile menu if open
+        $('.navbar-collapse.show').collapse('hide');
+      }
+    }
+    
+    // Initialize navbar behavior
+    initNavbar() {
+      const $navbar = this.elements.$navbar;
+      if (!$navbar.length) return;
+      
+      let lastScrollTop = 0;
+      
+      // Scroll handler for navbar
+      this.handleScroll = () => {
+        const scrollTop = $(window).scrollTop();
+        const navbarHeight = $navbar.outerHeight();
+        
+        // Add scrolled class when scrolling down
+        if (scrollTop > 50) {
+          $navbar.addClass('scrolled');
+        } else {
+          $navbar.removeClass('scrolled');
+        }
+        
+        // Hide navbar on scroll down, show on scroll up (mobile)
+        if (scrollTop > lastScrollTop && scrollTop > navbarHeight) {
+          $navbar.removeClass('navbar-visible').addClass('navbar-hidden');
+        } else {
+          $navbar.removeClass('navbar-hidden').addClass('navbar-visible');
+        }
+        
+        lastScrollTop = scrollTop;
+      };
+    }
+    
+    // Initialize back to top button
+    initBackToTop() {
+      const $backToTop = this.elements.$backToTop;
+      if (!$backToTop.length) return;
+      
+      // Scroll handler for back to top button
+      const originalHandleScroll = this.handleScroll || function() {};
+      
+      this.handleScroll = () => {
+        // Call original scroll handler
+        originalHandleScroll();
+        
+        // Show/hide back to top button
+        if ($(window).scrollTop() > 400) {
+          $backToTop.addClass('is-visible');
+        } else {
+          $backToTop.removeClass('is-visible');
+        }
+      };
+      
+      // Click handler for back to top button
+      $backToTop.on('click.tourism', (e) => {
+        e.preventDefault();
+        $('html, body').animate({ scrollTop: 0 }, 600);
+      });
+    }
+    
+    // Handle keydown events
+    handleKeyDown(e) {
+      // Escape key to close modals/menus
+      if (e.key === 'Escape') {
+        // Close mobile menu
+        $('.navbar-collapse.show').collapse('hide');
+        
+        // Hide loading overlay if visible
+        this.elements.$loadingOverlay.removeClass(this.config.classes.active);
+        $('body').removeClass(this.config.classes.loading);
+      }
+    }
+    
+    // Handle resize events
+    handleResize() {
+      // Close mobile menu on resize
+      $('.navbar-collapse').removeClass('show');
+    }
+    
+    // Add page transition effect
+    addPageTransition($element) {
+      $element.removeClass('active');
+      setTimeout(() => {
+        $element.addClass('active');
+      }, this.config.animations.delay);
+    }
+    
+    // Public API methods
+    // Navigate to a page programmatically
+    goTo(page, url) {
+      const $link = this.elements.$navLinks.filter(`[data-page="${page}"]`);
+      const targetUrl = url || $link.attr('href');
+      
+      if (targetUrl) {
+        this.navigateToPage(targetUrl, page, true);
+      }
+    }
+    
+    // Refresh current page
+    refresh() {
+      const currentPage = this.state.currentPage;
+      const $link = this.elements.$navLinks.filter(`[data-page="${currentPage}"]`);
+      const url = $link.attr('href');
+      
+      if (url) {
+        this.navigateToPage(url, currentPage, false);
+      }
+    }
+    
+    // Get current page
+    getCurrentPageName() {
+      return this.state.currentPage;
+    }
+    
+    // Check if page is loading
+    isLoading() {
+      return this.state.isLoading;
     }
   }
-
-  /* =========================
-     Back-to-top click handler
-     ========================= */
-  _onBackToTopClick(e) {
-    e.preventDefault();
-    const behavior = GlobalSite.prefersReducedMotion() ? 'auto' : 'smooth';
-    window.scrollTo({ top: 0, behavior });
-  }
-
-  /* =========================
-     Scroll & resize handling (rAF + debounce)
-     ========================= */
-  _onScroll() {
-    if (this._rafScheduled) return;
-    this._rafScheduled = true;
-    requestAnimationFrame(() => {
-      this._rafScheduled = false;
-      this._lastScrollY = window.scrollY || window.pageYOffset;
-      // Sticky navbar
-      if (this._navbar) {
-        const isSticky = this._lastScrollY > this._stickyThreshold;
-        GlobalSite.toggleClass(this._navbar, this.opts.classes.sticky, isSticky);
-      }
-      // Back-to-top visibility
-      if (this._backToTop) {
-        const visible = this._lastScrollY > this.opts.thresholds.backToTopPx;
-        GlobalSite.toggleClass(this._backToTop, this.opts.classes.backToTopVisible, visible);
-      }
-      // Active link (fallback if no observer)
-      if (!this._observer) this._updateActiveByPosition();
-    });
-  }
-
-  _onResize() {
-    clearTimeout(this._resizeTimer);
-    this._resizeTimer = setTimeout(() => {
-      this._computeStickyThreshold();
-      this._sections = GlobalSite.qa(this.opts.selectors.section);
-      if (this._observer) {
-        try { this._observer.disconnect(); } catch { /* ignore */ }
-        this._setupSectionObserver();
-      }
-      // re-evaluate state
-      this._onScroll();
-    }, 120);
-  }
-
-  /* =========================
-     Bind/unbind helpers
-     ========================= */
-  _bind() {
-    // Delegated anchor links
-    const unbindAnchors = GlobalSite.delegate(document, 'a[href^="#"]', 'click', this._handleAnchorClick, { passive: false });
-    this._unbindFns.push(unbindAnchors);
-
-    // Back-to-top click
-    if (this._backToTop) {
-      this._backToTop.addEventListener('click', this._onBackToTopClick);
-      this._unbindFns.push(() => this._backToTop.removeEventListener('click', this._onBackToTopClick));
+  
+  // Create singleton instance
+  let instance = null;
+  
+  // Factory function
+  function createTourism(options = {}) {
+    if (!instance) {
+      instance = new Tourism(options);
     }
-
-    // Scroll and resize
-    window.addEventListener('scroll', this._onScroll, { passive: true });
-    this._unbindFns.push(() => window.removeEventListener('scroll', this._onScroll));
-    window.addEventListener('resize', this._onResize, { passive: true });
-    this._unbindFns.push(() => window.removeEventListener('resize', this._onResize));
+    return instance;
   }
-}
-
-/* =========================
-   Default singleton
-   - Auto-instantiated and exported for convenience
-   - Consumers can import { GlobalSite } for manual control
-   ========================= */
-const defaultInstance = new GlobalSite();
-export default defaultInstance;
+  
+  // Expose Tourism class and factory function
+  const TourismAPI = {
+    Tourism: Tourism,
+    create: createTourism,
+    getInstance: () => instance
+  };
+  
+  // Initialize automatically when DOM is ready
+  $(() => {
+    if (!instance) {
+      instance = createTourism();
+    }
+  });
+  
+  return TourismAPI;
+}));

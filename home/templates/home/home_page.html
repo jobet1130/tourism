@@ -12,10 +12,10 @@ Delete the line below if you're just getting started and want to remove the welc
 {% endblock extra_css %}
 
 {% block content %}
-
-{% comment %}
-Delete the line below if you're just getting started and want to remove the welcome screen!
-{% endcomment %}
-{% include 'home/welcome_page.html' %}
-
+<div id="main-content" class="page-transition active">
+  {% comment %}
+  Delete the line below if you're just getting started and want to remove the welcome screen!
+  {% endcomment %}
+  {% include 'home/welcome_page.html' %}
+</div>
 {% endblock content %}

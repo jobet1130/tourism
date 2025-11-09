@@ -1,0 +1,64 @@
+{% load static %}
+<nav class="navbar navbar-expand-lg fixed-top site-navbar navbar-visible" role="navigation" aria-label="Main navigation">
+  <div class="container-fluid navbar-container">
+    <a class="navbar-brand" href="/">
+      <img src="{% static 'images/logo_icon.jpg' %}" alt="Misamis Occidental Tourism" class="site-logo">
+      <span class="brand-text">Misamis Occidental Tourism</span>
+    </a>
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="mainNavbar">
+      <ul class="navbar-nav ms-auto align-items-lg-center">
+        <li class="nav-item">
+          <a class="nav-link active" href="/" data-page="home" aria-current="page">
+            <i class="fas fa-home me-1"></i> Home
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/destinations/" data-page="destinations">
+            <i class="fas fa-mountain me-1"></i> Destinations
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/festivals/" data-page="festivals">
+            <i class="fas fa-calendar-alt me-1"></i> Festivals
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/stay/" data-page="stay">
+            <i class="fas fa-hotel me-1"></i> Where to Stay
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/cuisine/" data-page="cuisine">
+            <i class="fas fa-utensils me-1"></i> Cuisine
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/about/" data-page="about">
+            <i class="fas fa-info-circle me-1"></i> About
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/contact/" data-page="contact">
+            <i class="fas fa-envelope me-1"></i> Contact
+          </a>
+        </li>
+
+        <li class="nav-item ms-lg-3">
+          <a class="nav-cta" href="/plan/" data-page="plan">
+            <i class="fas fa-map me-1"></i> Plan Your Trip
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- AJAX Loading Indicator -->
+<div class="ajax-loading-overlay">
+  <div class="ajax-spinner"></div>
+</div>

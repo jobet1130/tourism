@@ -7,12 +7,22 @@ from wagtail import urls as wagtail_urls
 from wagtail.documents import urls as wagtaildocs_urls
 
 from search import views as search_views
+from home import views as home_views
 
 urlpatterns = [
     path("django-admin/", admin.site.urls),
     path("admin/", include(wagtailadmin_urls)),
     path("documents/", include(wagtaildocs_urls)),
     path("search/", search_views.search, name="search"),
+    
+    # JSON API endpoints for AJAX navigation
+    path("home/json/", home_views.home_json, name="home_json"),
+    path("destinations/json/", home_views.destinations_json, name="destinations_json"),
+    path("festivals/json/", home_views.festivals_json, name="festivals_json"),
+    path("stay/json/", home_views.stay_json, name="stay_json"),
+    path("cuisine/json/", home_views.cuisine_json, name="cuisine_json"),
+    path("about/json/", home_views.about_json, name="about_json"),
+    path("contact/json/", home_views.contact_json, name="contact_json"),
 ]
 
 
